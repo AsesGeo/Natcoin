@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+   <head>
+          <title>Le Tandem</title>
+
+         <!--Enlace a leaflet-->
+         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script> 
+    
+          <!--Enlace al plugin Legend Master-->
+          <link rel="stylesheet" href="https://ptma.github.io/Leaflet.Legend/src/leaflet.legend.css">
+           <script src="https://ptma.github.io/Leaflet.Legend/src/leaflet.legend.js"></script>
+          
+
+
+          <!-- Plugin Leaflet.markercluster-->
+            <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+            <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+            <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster-src.js"></script>
+
+
+            <link rel="stylesheet" href="https://norkart.github.io/Leaflet-MiniMap/Control.MiniMap.css">
+            <script src="https://norkart.github.io/Leaflet-MiniMap/Control.MiniMap.js"></script>
+
+        <!--Definción de estilos CSS-->
+          <style>
+          html, body {height:100%} 
+          #mapDiv {
+              height: 600px;
+              width: 1000px; 
+             }
+             
+            
+
+            .title {
+            width: 120px;
+            height: 110px;
+            font-size: 12px;
+            color: #0B3B0B;
+            font-family: "Arial";
+            padding: 10px 14px;
+            background-color: rgba(0,255,0,0.4);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 3px;
+            border: 1px solid rgb(138, 221,45, 0.2);
+            }
+
+          </style>
+
+
+    </head>
+          <body>
+          <div id="mapDiv"></div>
+         
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+
+          
+          <script>
+            //Construcción del mapa JS y definciión de mapas base
+            var map = new L.Map('mapDiv',
+                
+              { center:[28.4064,-106.2774],
+                zoom:10
+              });
+            var osmAttrib = 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+            var subdomains = ['a', 'b' ,'c'];
+         
+            //Ajustes del mapa base
+            var tile_settings = {
+                minZoom: 1,
+                maxZoom: 25,
+                attribution: osmAttrib,
+                subdomains: subdomains
+            };
+           
+            //Opciones de mapas base
+            var osmUrl = "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png";
+            var mapNik = "https://{s}.tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png";
+            var esrisat= "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+            
+            tiles = {
+                "OSM": new L.TileLayer(osmUrl, tile_settings),
+                "Mapnik": new L.TileLayer(mapNik, tile_settings),
+                "satelite": new L.TileLayer(esrisat, tile_settings),
+            };
+            
+            map.addLayer(tiles["satelite"]);
+
+           
+            
+        
+        //CARGAR GEOJSON
+           var arbolesURL = "https://asesgeo.github.io/Natcoin/natcoin.geojson"
+           var proyectoURL = "https://asesgeo.github.io/Capasbase/soto.geojson"
+           var municipioURL = "https://asesgeo.github.io/Capasbase/limite_muni.geojson"
+           var estadoURL = "https://asesgeo.github.io/Capasbase/limite_estatal.geojson"
+           var paisURL = "https://asesgeo.github.io/Capasbase/limte_nac.geojson"
+           
+        $.when($.getJSON(arbolesURL), $.getJSON(estadoURL),$.getJSON(municipioURL), $.getJSON(paisURL), $.getJSON(proyectoURL)). done( function(data1, data2, data3, data4, data5) {
+   
+
+          
+            var geojson1= new L.GeoJSON(data1,{pointToLayer: function(feature, latlng) {
+                    var arbol= 'https://asesgeo.github.io/Capasbase/tree.png'
+                                        var mapicon= L.icon({
+                                            iconUrl: arbol,
+                                            iconSize:[15,15],
+
+                                        });
+                                    return L.marker(latlng, {icon:mapicon});
+                        
+                        
+          }, onEachFeature: function(feature,layer){
+                         var popup1= 
+                          '<div class="popup">' + '<b>Info</b><br><hr>'+
+                          '<strong>ID: </strong>'+ feature.properties.Consecutiv + '<br>' + 
+                          '<strong>ID certificate: </strong>'+ feature.properties.ID_Certifi + '<br>' + 
+                          '<strong>Planted: </strong>'+ feature.properties.Fecha_de_p + '<br>'+ 
+                          '<strong>Scientific name: </strong><I>'+ feature.properties.Nombre_cie + '</I><br>'+
+                          '<strong>Common name: </strong>'+ feature.properties.Nombre_com + '<br>'+ 
+                          '<strong>Client: </strong>'+ feature.properties.Propietari + '<br>'+ 
+                          '</div>'
+                          layer.bindPopup(popup1);
+          }});
+          
+          var clusterejemplo = L.markerClusterGroup({spiderfyOnMaxZoom: true, bubblingMouseEvents: true});
+        
+          clusterejemplo.addLayer(geojson1);
+          
+
+          
+
+          var geojson2 = new L.GeoJSON(data2, {style: style2});
+          var geojson3 = new L.GeoJSON(data3, {style: style3});
+          var geojson4 = new L.GeoJSON(data4, {style: style4});
+          var geojson5 = new L.GeoJSON(data5, {style: style5, onEachFeature: onEachFeature2});
+          
+
+            //MOSTRAR CAPAS
+            map.addLayer(geojson4);
+            map.addLayer(geojson3);
+            map.addLayer(geojson2);
+            map.addLayer(geojson5);
+            map.addLayer(geojson1);
+            map.addLayer(clusterejemplo);
+            
+            
+           
+ 
+            //ACTIVAR/DESACTIVAR CAPAS
+            var overlays = {
+                "Assigned trees": geojson1,
+                "Soto":geojson5,
+                "Chihuahua municipality": geojson3,
+                "Chihuahua state": geojson2,
+                "Mexico": geojson4,
+
+            }
+            L.control.layers(tiles, overlays).addTo(map); 
+            
+            //CONTROL DE ESCALA
+            L.control.scale({imperial:false, maxWidth:100}).addTo(map); 
+        });
+        
+      
+      //ÍNDICE
+         
+          function style2 (feature){
+               return{
+                fillColor: "transparent",
+                fillOpacity:0.75,
+                color: "#8000FF",
+                weight: 3,
+                dashArray: "10, 10" 
+               }
+                }
+                function style3 (feature){
+               return{
+                fillColor: "transparent",
+                fillOpacity:0.75,
+                color: "#0040FF",
+                weight: 2, 
+                dashArray: "10, 10" 
+               }
+                }
+                function style4 (feature){
+               return{
+                fillColor: "transparent",
+                fillOpacity:0.75,
+                color: "#A4A4A4",
+                weight: 3,
+                dashArray: "10, 10" 
+               }
+                }
+                function style5 (feature){
+               return{
+                fillColor: "transparent",
+                fillOpacity:0.75,
+                color: "#FF0000",
+                weight: 3,
+                dashArray: "10, 10" 
+               }
+                }
+               
+          //popups
+          var popup2 = L.popup();
+                function onEachFeature2(feature, layer) {
+            	layer.on({click: onMapClick2})
+                }
+                function onMapClick2(f) {
+	                popup2
+		            .setLatLng(f.latlng)
+		            .setContent(f.target.feature.properties.Name)
+		            .openOn(map);
+                        };
+
+
+                        var popup3 = L.popup();
+                function onEachFeature3(feature, layer) {
+            	layer.on({click: onMapClick2})
+                }
+                function onMapClick2(f) {
+	                popup3
+		            .setLatLng(f.latlng)
+		            .setContent(f.target.feature.properties.Name)
+		            .openOn(map);
+                        };
+
+
+        var popup3 = L.popup();
+                function onEachFeature4(feature, layer) {
+            	layer.on({click: onMapClick2})
+                }
+                function onMapClick2(f) {
+	                popup3
+		            .setLatLng(f.latlng)
+		            .setContent(f.target.feature.properties.Name)
+		            .openOn(map);
+                        };
+          //RECUADRO DE INFORMACION
+           
+              let title = L.control({position: "bottomleft"});
+
+              title.onAdd = function() {
+                  let div = L.DomUtil.create("div", "title");
+                  div.innerHTML = 
+                  '<p><b><h2>Natcoin</h2></b></p><hr>' +
+                  'Action Climatique' +
+                  '<br>Nous sommes votre allié</br>'
+                  '</br>';
+                    return div;
+                  };
+              title.addTo(map);
+
+              var north = L.control({position: "bottomright"});
+            north.onAdd = function(map) {
+                var div = L.DomUtil.create("div", "info legend");
+                div.innerHTML = '<img src="https://asesgeo.github.io/Capasbase/Leyenda3.png" width="200" height="150" filter:alpha(opacity=40)>';
+                return div;
+            }
+            north.addTo(map);
+        </script>
+     </body>
+</html>
